@@ -35,10 +35,10 @@ public class User {
   }
 
   public void decreaseBalance(BigDecimal amount) {
-    this.balance.subtract(amount);
+    this.balance = this.balance.subtract(amount);
   }
 
   public void increaseBalance(BigDecimal amount) {
-    this.balance.add(amount);
+    this.balance = this.balance.add(amount);
   }
 }
