@@ -15,18 +15,18 @@ class BankService {
     this.userStorage = userStorage;
   }
 
-  private record TransferInfo(Transfer transfer, Optional<BigDecimal> balanceAfterTransfer,
+  public record TransferInfo(Transfer transfer, Optional<BigDecimal> balanceAfterTransfer,
       Optional<String> message) {
   }
 
-  private record UserInfo(User user, List<Transfer> transfers) {
+  public record UserInfo(User user, List<Transfer> transfers) {
   }
 
   public Optional<User> registerUser(String fullName, BigDecimal balance) {
     return userStorage.insert(fullName, balance);
   }
 
-  private TransferInfo transfer(User user, BigDecimal amount) {
+  public TransferInfo transfer(User user, BigDecimal amount) {
     var transfer = new Transfer(user, amount, TransferStatus.ACCEPTED);
 
     if (!userStorage.findById(user.getId()).isPresent()) {
@@ -52,7 +52,7 @@ class BankService {
         Optional.empty());
   }
 
-  private TransferInfo increaseBalance(User user, BigDecimal amount) {
+  public TransferInfo increaseBalance(User user, BigDecimal amount) {
     var transfer = new Transfer(user, amount, TransferStatus.ACCEPTED);
 
     if (!userStorage.findById(user.getId()).isPresent()) {
