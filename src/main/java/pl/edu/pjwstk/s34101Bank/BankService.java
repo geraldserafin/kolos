@@ -15,7 +15,8 @@ class BankService {
     this.userStorage = userStorage;
   }
 
-  private record TransferInfo(Transfer transfer, BigDecimal balanceAfterTransfer) {
+  private record TransferInfo(Transfer transfer, Optional<BigDecimal> balanceAfterTransfer,
+      Optional<String> message) {
   }
 
   private record UserInfo(User user, List<Transfer> transfers) {
@@ -30,26 +31,43 @@ class BankService {
 
     if (!userStorage.findById(user.getId()).isPresent()) {
       transfer.setStatus(TransferStatus.DECLINED);
+
+      return new TransferInfo(transfer, Optional.empty(),
+          Optional.of("User not found"));
     }
 
     if (user.getBalance().compareTo(amount) == -1) {
       transfer.setStatus(TransferStatus.DECLINED);
+
+      return new TransferInfo(transfer, Optional.empty(),
+          Optional.of("Insufficient funds"));
     }
 
     transferStorage.insert(transfer);
 
     // Previous check ensures that the user exist so we can safely use .get()
-    var updatedUser = userStorage.update(user.getId(), u -> u.increaseBalance(amount)).get();
+    var updatedUser = userStorage.update(user.getId(), u -> u.decreaseBalance(amount));
 
-    return new TransferInfo(transfer, updatedUser.getBalance());
+    return new TransferInfo(transfer, updatedUser.map(u -> u.getBalance()),
+        Optional.empty());
   }
 
-  public TransferInfo transferElse(User user, BigDecimal amount) {
-    return this.transfer(user, amount.negate());
-  }
+  private TransferInfo increaseBalance(User user, BigDecimal amount) {
+    var transfer = new Transfer(user, amount, TransferStatus.ACCEPTED);
 
-  public TransferInfo addFounds(User user, BigDecimal amount) {
-    return this.transfer(user, amount);
+    if (!userStorage.findById(user.getId()).isPresent()) {
+      transfer.setStatus(TransferStatus.DECLINED);
+
+      return new TransferInfo(transfer, Optional.empty(),
+          Optional.of("User not found"));
+    }
+
+    transferStorage.insert(transfer);
+
+    var updatedUser = userStorage.update(user.getId(), u -> u.increaseBalance(amount));
+
+    return new TransferInfo(transfer, updatedUser.map(u -> u.getBalance()),
+        Optional.empty());
   }
 
   public Optional<UserInfo> getUserInfo(String id) {
